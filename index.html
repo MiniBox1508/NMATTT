@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An ninh mạng: Ôn tập theo topic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&family=STIX+Two+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7fa;--card:#fff;--ink:#1d2433;--mute:#5b6577;--line:#d9deea;--blue:#0f3b73;--red:#b3282d;--ok:#1b7a43;--okbg:#e5f4ea;--bad:#b3282d;--badbg:#fbe9ea}
+@media(prefers-color-scheme:dark){:root{--bg:#10141c;--card:#181e2a;--ink:#e6e9f0;--mute:#9aa4b8;--line:#2b3447;--blue:#7fb0f0;--red:#f08083;--ok:#6fd49a;--okbg:#14291e;--bad:#f08083;--badbg:#2e1719}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Be Vietnam Pro","Segoe UI",Roboto,"Noto Sans",Arial,sans-serif}
+header{border-bottom:3px solid var(--red);background:var(--card);padding:16px 20px}
+header h1{margin:0;font-size:1.25rem;color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:20px}
+#lessons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+#lessons button{flex:1 1 200px;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+#lessons button small{display:block;font-weight:400;color:var(--mute)}
+#lessons button.on{border-color:var(--blue);box-shadow:inset 4px 0 0 var(--blue)}
+h2{font-size:1.2rem;margin:0 0 8px}
+select{width:100%;padding:10px;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.sum{margin:18px 0;padding:4px 18px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px}
+code,kbd{font-family:"JetBrains Mono","Noto Sans Mono",Consolas,monospace;font-size:.88em;background:var(--bg);padding:1px 5px;border-radius:4px}
+i,.math{font-family:"STIX Two Text","Cambria Math","Times New Roman",serif;font-size:1.05em}
+.q{margin:16px 0;padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:6px}
+.q h3{margin:0 0 4px;font-size:1rem}
+.q h3 span{font-weight:400;color:var(--mute);font-size:.88rem;margin-left:6px}
+.q label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;margin:6px 0;border:1px solid var(--line);border-radius:6px;cursor:pointer}
+.q label.right{border-color:var(--ok);background:var(--okbg)}
+.q label.wrong{border-color:var(--bad);background:var(--badbg)}
+.q input{margin-top:6px}
+.chk{margin-top:6px;padding:8px 18px;border:0;border-radius:6px;background:var(--blue);color:var(--card);font:inherit;font-weight:600;cursor:pointer}
+.fb{margin-top:10px}.fb:empty{display:none}
+</style>
+</head>
+<body>
+<header><h1>An ninh mạng: ôn tập theo topic</h1></header>
+<main>
+  <nav id="lessons" aria-label="Danh sách bài"></nav>
+  <h2 id="heading"></h2>
+  <label for="topics" class="sr" hidden>Chọn topic</label>
+  <select id="topics"></select>
+  <div id="content"></div>
+</main>
+<script src="lessons.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+let li = 0, ti = 0;
+
+function render() {
+  const L = LESSONS[li];
+  [...$('#lessons').children].forEach((b, i) => b.classList.toggle('on', i === li));
+  $('#heading').textContent = `Bài ${L.id}. ${L.title}`;
+  $('#topics').innerHTML = L.topics.map((t, i) => `<option value="${i}">Topic ${i + 1}: ${t.t}</option>`).join('');
+  showTopic();
+}
+
+function question(Q, n, multi) {
+  return `<div class="q" data-n="${n}"><h3>Câu ${n}<span>${multi ? 'Chọn một hoặc nhiều đáp án' : 'Chọn một đáp án'}</span></h3><p>${Q.q}</p>`
+    + Q.o.map((o, i) => `<label><input type="${multi ? 'checkbox' : 'radio'}" name="q${n}"><span>${o}</span></label>`).join('')
+    + `<button class="chk">Kiểm tra đáp án</button><div class="fb" aria-live="polite"></div></div>`;
+}
+
+function showTopic() {
+  const T = LESSONS[li].topics[ti];
+  $('#topics').value = ti;
+  $('#content').innerHTML = `<section class="sum">${T.s}</section>` + question(T.q1, 1, false) + question(T.q2, 2, true);
+}
+
+$('#lessons').innerHTML = LESSONS.map((l, i) => `<button data-i="${i}">Bài ${l.id}<small>${l.title}</small></button>`).join('');
+$('#lessons').onclick = e => {
+  const b = e.target.closest('button');
+  if (b) { li = +b.dataset.i; ti = 0; render(); }
+};
+$('#topics').onchange = e => { ti = +e.target.value; showTopic(); };
+$('#content').onclick = e => {
+  if (!e.target.classList.contains('chk')) return;
+  const box = e.target.parentNode, Q = LESSONS[li].topics[ti]['q' + box.dataset.n];
+  const ans = [].concat(Q.a), picked = [...box.querySelectorAll('input')].map(x => x.checked);
+  let ok = true;
+  box.querySelectorAll('label').forEach((l, i) => {
+    const right = ans.includes(i);
+    if (right !== picked[i]) ok = false;
+    l.classList.toggle('right', right);
+    l.classList.toggle('wrong', picked[i] && !right);
+  });
+  box.querySelector('.fb').innerHTML = `<b>${ok ? '✔ Chính xác.' : '✘ Chưa đúng.'}</b> ${Q.e}`;
+};
+render();
+</script>
+</body>
+</html>
